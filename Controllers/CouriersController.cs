@@ -1,32 +1,51 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using FoodDeliveryApp.Data;
 using FoodDeliveryApp.Models;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FoodDeliveryApp.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class CouriersController : ControllerBase
+public class CourierController : ControllerBase
 {
     private readonly AppDbContext _context;
 
-    public CouriersController(AppDbContext context)
+    public CourierController(AppDbContext context)
     {
         _context = context;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Courier>>> GetCouriers()
+    // Получение новых заказов для курьера
+    [HttpGet("new-orders")]
+    public async Task<ActionResult<IEnumerable<Order>>> GetNewOrders()
     {
-        return await _context.Couriers.ToListAsync();
+        var courierId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
+
+        var orders = await _context.Orders
+            .Where(o => o.CourierId == courierId && o.Status == OrderStatus.Pending)
+            .Include(o => o.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .Include(o => o.Restaurant)
+            .ToListAsync();
+
+        return Ok(orders);
     }
 
-    [HttpPost]
-    public async Task<ActionResult<Courier>> CreateCourier(Courier courier)
+    // Обновление координат курьера
+    [HttpPut("update-location")]
+    public async Task<IActionResult> UpdateLocation([FromQuery] double lat, [FromQuery] double lng)
     {
-        _context.Couriers.Add(courier);
+        var courierId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
+        var courier = await _context.Couriers.FindAsync(courierId);
+        if (courier == null) return NotFound("Курьер не найден");
+
+        courier.Latitude = lat;
+        courier.Longitude = lng;
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetCouriers), new { id = courier.Id }, courier);
+        return Ok(courier);
     }
 }

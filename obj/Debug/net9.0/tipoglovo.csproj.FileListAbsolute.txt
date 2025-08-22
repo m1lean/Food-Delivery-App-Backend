@@ -161,3 +161,4 @@ C:\Users\alexp\RiderProjects\tipoglovo\tipoglovo\bin\Debug\net9.0\Swashbuckle.As
 C:\Users\alexp\RiderProjects\tipoglovo\tipoglovo\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\alexp\RiderProjects\tipoglovo\tipoglovo\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\alexp\RiderProjects\tipoglovo\tipoglovo\obj\Debug\net9.0\tipoglovo.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\alexp\RiderProjects\tipoglovo\tipoglovo\obj\Debug\net9.0\tipoglovo.sourcelink.json
