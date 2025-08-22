@@ -6,26 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace FoodDeliveryApp.Controllers;
 
-[HttpPut("{id}/status")]
-public async Task<IActionResult> UpdateStatus(int id, [FromQuery] OrderStatus status)
-{
-    var order = await _context.Orders.Include(o => o.Courier).FirstOrDefaultAsync(o => o.Id == id);
-    if (order == null) return NotFound("Заказ не найден");
-
-    order.Status = status;
-
-    // если заказ завершён или отменён, освобождаем курьера
-    if (status == OrderStatus.Completed || status == OrderStatus.Cancelled)
-    {
-        if (order.Courier != null)
-            order.Courier.IsAvailable = true;
-    }
-
-    await _context.SaveChangesAsync();
-    return Ok(order);
-}
-
-
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
@@ -38,6 +18,7 @@ public class OrdersController : ControllerBase
         _context = context;
     }
 
+    // ------------------- Получение всех заказов -------------------
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
     {
@@ -45,18 +26,20 @@ public class OrdersController : ControllerBase
             .Include(o => o.Restaurant)
             .Include(o => o.Products)
             .Include(o => o.Courier)
+            .Include(o => o.User)
             .ToListAsync();
     }
 
+    // ------------------- Создание нового заказа -------------------
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder([FromBody] OrderCreateDto dto)
     {
-        // 🔹 Ищем ресторан
+        // Ищем ресторан
         var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
         if (restaurant == null)
             return BadRequest("Ресторан не найден");
 
-        // 🔹 Ищем продукты
+        // Ищем продукты
         var products = await _context.Products
             .Where(p => dto.ProductIds.Contains(p.Id))
             .ToListAsync();
@@ -64,7 +47,7 @@ public class OrdersController : ControllerBase
         if (!products.Any())
             return BadRequest("Продукты не найдены");
 
-        // 🔹 Ищем свободного курьера
+        // Ищем свободного курьера
         var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.IsAvailable);
         if (courier == null)
             return BadRequest("Нет свободных курьеров");
@@ -77,13 +60,37 @@ public class OrdersController : ControllerBase
             RestaurantId = dto.RestaurantId,
             Products = products,
             CourierId = courier.Id,
-            Status = "В обработке",
+            Status = OrderStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
+        return Ok(order);
+    }
+
+    // ------------------- Обновление статуса заказа -------------------
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateStatus(int id, [FromQuery] OrderStatus status)
+    {
+        var order = await _context.Orders
+            .Include(o => o.Courier)
+            .FirstOrDefaultAsync(o => o.Id == id);
+
+        if (order == null)
+            return NotFound("Заказ не найден");
+
+        order.Status = status;
+
+        // Если заказ завершён или отменён, освобождаем курьера
+        if (status == OrderStatus.Completed || status == OrderStatus.Cancelled)
+        {
+            if (order.Courier != null)
+                order.Courier.IsAvailable = true;
+        }
+
+        await _context.SaveChangesAsync();
         return Ok(order);
     }
 }
