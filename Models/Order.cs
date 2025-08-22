@@ -23,6 +23,8 @@ public class Order
     
     public int? Rating { get; set; } // оценка заказа/ресторана
 
+    public decimal? OrderDiscount { get; set; } // скидка на весь заказ
+
     public int CourierId { get; set; }
     public Courier? Courier { get; set; }
 

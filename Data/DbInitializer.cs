@@ -1,42 +1,60 @@
 ﻿using FoodDeliveryApp.Models;
 
-namespace FoodDeliveryApp.Data;
-
-public static class DbInitializer
+namespace FoodDeliveryApp.Data
 {
-    public static void Seed(AppDbContext context)
+    public static class DbInitializer
     {
-        if (context.Restaurants.Any()) return; // уже есть данные → не заполняем
-
-        // --- Рестораны ---
-        var mcDonalds = new Restaurant { Name = "McDonald's", Address = "str. Ovidiu, 3" };
-        var kfc = new Restaurant { Name = "KFC", Address = "str. Ismail, 25" };
-        var doncezar = new Restaurant { Name = "Domino's Pizza", Address = "str. Cuflia, 5" };
-
-        context.Restaurants.AddRange(mcDonalds, kfc, doncezar);
-        context.SaveChanges();
-
-        // --- Продукты ---
-        var products = new List<Product>
+        public static void Seed(AppDbContext context)
         {
-            new() { Name = "Биг Мак", Price = 5.99m, RestaurantId = mcDonalds.Id },
-            new() { Name = "Чизбургер", Price = 2.49m, RestaurantId = mcDonalds.Id },
-            new() { Name = "Филадельфия Ролл", Price = 4.99m, RestaurantId = doncezar.Id },
-            new() { Name = "Маргарита", Price = 7.99m, RestaurantId = doncezar.Id },
-            new() { Name = "Крылышки", Price = 6.49m, RestaurantId = kfc.Id },
-            new() { Name = "Баскет Комбо", Price = 9.99m, RestaurantId = kfc.Id }
-        };
-        context.Products.AddRange(products);
+            // ------------------- Рестораны -------------------
+            if (!context.Restaurants.Any())
+            {
+                var restaurants = new List<Restaurant>
+                {
+                    new() { Name = "McDonald's", Latitude = 48.8566, Longitude = 2.3522 },
+                    new() { Name = "Pizza Hut", Latitude = 41.9028, Longitude = 12.4964 },
+                    new() { Name = "Burger King", Latitude = 52.5200, Longitude = 13.4050 },
+                    new() { Name = "Sushi Samba", Latitude = 51.5074, Longitude = -0.1278 },
+                    new() { Name = "Le Pain Quotidien", Latitude = 50.8503, Longitude = 4.3517 },
+                    new() { Name = "La Casa del Gelato", Latitude = 45.4642, Longitude = 9.1900 }
+                };
 
-        // --- Курьеры ---
-        var couriers = new List<Courier>
-        {
-            new() { Name = "Иван Петров", Phone = "+37360000001", IsAvailable = true },
-            new() { Name = "Алексей Смирнов", Phone = "+37360000002", IsAvailable = true },
-            new() { Name = "Мария Коваленко", Phone = "+37360000003", IsAvailable = true }
-        };
-        context.Couriers.AddRange(couriers);
+                context.Restaurants.AddRange(restaurants);
+                context.SaveChanges();
 
-        context.SaveChanges();
+                // ------------------- Продукты -------------------
+                var products = new List<Product>
+                {
+                    new() { Name = "Big Mac", Price = 5.5m, Category = ProductCategory.Burgers, RestaurantId = 1, ImageUrl="https://linktobigmac.jpg" },
+                    new() { Name = "Cheeseburger", Price = 4.0m, Category = ProductCategory.Burgers, RestaurantId = 1 },
+                    new() { Name = "Pepperoni Pizza", Price = 8.0m, Category = ProductCategory.Pizza, RestaurantId = 2, Discount=0.1m },
+                    new() { Name = "Margherita Pizza", Price = 7.5m, Category = ProductCategory.Pizza, RestaurantId = 2 },
+                    new() { Name = "Whopper", Price = 6.0m, Category = ProductCategory.Burgers, RestaurantId = 3 },
+                    new() { Name = "California Roll", Price = 12.0m, Category = ProductCategory.Sushi, RestaurantId = 4 },
+                    new() { Name = "Matcha Cake", Price = 4.5m, Category = ProductCategory.Desserts, RestaurantId = 4 },
+                    new() { Name = "Croissant", Price = 2.5m, Category = ProductCategory.Desserts, RestaurantId = 5 },
+                    new() { Name = "Gelato", Price = 3.0m, Category = ProductCategory.Desserts, RestaurantId = 6 }
+                };
+
+                context.Products.AddRange(products);
+                context.SaveChanges();
+            }
+
+            // ------------------- Курьеры -------------------
+            if (!context.Couriers.Any())
+            {
+                var couriers = new List<Courier>
+                {
+                    new() { Name="Alice", Latitude=48.8566, Longitude=2.3522 },
+                    new() { Name="Bob", Latitude=41.9028, Longitude=12.4964 },
+                    new() { Name="Charlie", Latitude=52.5200, Longitude=13.4050 },
+                    new() { Name="Diana", Latitude=51.5074, Longitude=-0.1278 },
+                    new() { Name="Ethan", Latitude=50.8503, Longitude=4.3517 }
+                };
+
+                context.Couriers.AddRange(couriers);
+                context.SaveChanges();
+            }
+        }
     }
 }

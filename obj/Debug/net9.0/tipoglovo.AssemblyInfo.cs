@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("tipoglovo")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+67a4ac456f24524a7d8a5db964192ff76ebd8e4d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1a908e99f5bf45fa8fcdc81574e5bd1ec8facace")]
 [assembly: System.Reflection.AssemblyProductAttribute("tipoglovo")]
 [assembly: System.Reflection.AssemblyTitleAttribute("tipoglovo")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
