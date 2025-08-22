@@ -19,24 +19,40 @@ public class OrdersController : ControllerBase
         _context = context;
     }
 
-    // ------------------- Получение всех заказов -------------------
+    // ------------------- Получение всех заказов с фильтрацией и пагинацией -------------------
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+    public async Task<ActionResult> GetOrders(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] OrderStatus? status = null)
     {
-        return await _context.Orders
+        var query = _context.Orders
             .Include(o => o.Restaurant)
             .Include(o => o.Courier)
             .Include(o => o.User)
             .Include(o => o.CartItems)
             .ThenInclude(ci => ci.Product)
+            .AsQueryable();
+
+        if (status != null)
+            query = query.Where(o => o.Status == status);
+
+        var total = await query.CountAsync();
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
+
+        return Ok(new { total, page, pageSize, data = orders });
     }
 
     // ------------------- История заказов текущего пользователя -------------------
     [HttpGet("history")]
-    public async Task<ActionResult<IEnumerable<Order>>> GetUserOrderHistory()
+    public async Task<ActionResult> GetUserOrderHistory()
     {
         var userId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
+
         var orders = await _context.Orders
             .Where(o => o.UserId == userId)
             .Include(o => o.CartItems)
@@ -55,7 +71,6 @@ public class OrdersController : ControllerBase
     {
         var userId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
 
-        // Ищем продукты
         var productIds = dto.Items.Select(i => i.ProductId).ToList();
         var products = await _context.Products
             .Where(p => productIds.Contains(p.Id))
@@ -64,18 +79,15 @@ public class OrdersController : ControllerBase
 
         if (!products.Any()) return BadRequest("Продукты не найдены");
 
-        // Проверяем, чтобы все продукты из одного ресторана
         var restaurantIds = products.Select(p => p.RestaurantId).Distinct().ToList();
         if (restaurantIds.Count > 1) return BadRequest("Продукты из разных ресторанов запрещены");
 
         var restaurantId = restaurantIds.First();
 
-        // Находим свободного курьера
         var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.IsAvailable);
         if (courier == null) return BadRequest("Нет свободных курьеров");
         courier.IsAvailable = false;
 
-        // Создаём CartItems
         var cartItems = dto.Items.Select(i =>
         {
             var product = products.First(p => p.Id == i.ProductId);
@@ -87,7 +99,6 @@ public class OrdersController : ControllerBase
             };
         }).ToList();
 
-        // Пример фиксированной доставки (можно заменить динамической)
         decimal deliveryFee = 5.0m;
 
         var order = new Order
@@ -121,7 +132,6 @@ public class OrdersController : ControllerBase
         order.Status = status;
         order.StatusUpdatedAt = DateTime.UtcNow;
 
-        // Освобождаем курьера при завершении или отмене
         if (status == OrderStatus.Completed || status == OrderStatus.Cancelled)
         {
             if (order.Courier != null)
