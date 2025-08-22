@@ -14,6 +14,14 @@ public class Order
     public int Id { get; set; }
     public int UserId { get; set; }
     public User? User { get; set; }
+    
+    public List<CartItem> CartItems { get; set; } = new();
+    
+    public decimal DeliveryFee { get; set; }
+    
+    public DateTime? StatusUpdatedAt { get; set; }
+    
+    public int? Rating { get; set; } // оценка заказа/ресторана
 
     public int CourierId { get; set; }
     public Courier? Courier { get; set; }

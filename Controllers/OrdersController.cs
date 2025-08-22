@@ -25,51 +25,81 @@ public class OrdersController : ControllerBase
     {
         return await _context.Orders
             .Include(o => o.Restaurant)
-            .Include(o => o.Products)
             .Include(o => o.Courier)
             .Include(o => o.User)
+            .Include(o => o.CartItems)
+            .ThenInclude(ci => ci.Product)
             .ToListAsync();
+    }
+
+    // ------------------- История заказов текущего пользователя -------------------
+    [HttpGet("history")]
+    public async Task<ActionResult<IEnumerable<Order>>> GetUserOrderHistory()
+    {
+        var userId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
+        var orders = await _context.Orders
+            .Where(o => o.UserId == userId)
+            .Include(o => o.CartItems)
+            .ThenInclude(ci => ci.Product)
+            .Include(o => o.Restaurant)
+            .Include(o => o.Courier)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+
+        return Ok(orders);
     }
 
     // ------------------- Создание нового заказа -------------------
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder([FromBody] OrderCreateDto dto)
     {
-        // 🔹 Получаем UserId из JWT
-        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub");
-        if (userIdClaim == null)
-            return Unauthorized("UserId не найден в токене");
+        var userId = int.Parse(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub").Value);
 
-        int userId = int.Parse(userIdClaim.Value);
-
-        // 🔹 Ищем ресторан
-        var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
-        if (restaurant == null)
-            return BadRequest("Ресторан не найден");
-
-        // 🔹 Ищем продукты
+        // Ищем продукты
+        var productIds = dto.Items.Select(i => i.ProductId).ToList();
         var products = await _context.Products
-            .Where(p => dto.ProductIds.Contains(p.Id))
+            .Where(p => productIds.Contains(p.Id))
+            .Include(p => p.Restaurant)
             .ToListAsync();
 
-        if (!products.Any())
-            return BadRequest("Продукты не найдены");
+        if (!products.Any()) return BadRequest("Продукты не найдены");
 
-        // 🔹 Ищем свободного курьера
+        // Проверяем, чтобы все продукты из одного ресторана
+        var restaurantIds = products.Select(p => p.RestaurantId).Distinct().ToList();
+        if (restaurantIds.Count > 1) return BadRequest("Продукты из разных ресторанов запрещены");
+
+        var restaurantId = restaurantIds.First();
+
+        // Находим свободного курьера
         var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.IsAvailable);
-        if (courier == null)
-            return BadRequest("Нет свободных курьеров");
+        if (courier == null) return BadRequest("Нет свободных курьеров");
+        courier.IsAvailable = false;
 
-        courier.IsAvailable = false; // курьер занят
+        // Создаём CartItems
+        var cartItems = dto.Items.Select(i =>
+        {
+            var product = products.First(p => p.Id == i.ProductId);
+            return new CartItem
+            {
+                ProductId = product.Id,
+                Product = product,
+                Quantity = i.Quantity
+            };
+        }).ToList();
+
+        // Пример фиксированной доставки (можно заменить динамической)
+        decimal deliveryFee = 5.0m;
 
         var order = new Order
         {
-            UserId = userId, // ✅ берём из JWT
-            RestaurantId = dto.RestaurantId,
-            Products = products,
+            UserId = userId,
+            RestaurantId = restaurantId,
             CourierId = courier.Id,
+            CartItems = cartItems,
+            DeliveryFee = deliveryFee,
             Status = OrderStatus.Pending,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            StatusUpdatedAt = DateTime.UtcNow
         };
 
         _context.Orders.Add(order);
@@ -86,12 +116,12 @@ public class OrdersController : ControllerBase
             .Include(o => o.Courier)
             .FirstOrDefaultAsync(o => o.Id == id);
 
-        if (order == null)
-            return NotFound("Заказ не найден");
+        if (order == null) return NotFound("Заказ не найден");
 
         order.Status = status;
+        order.StatusUpdatedAt = DateTime.UtcNow;
 
-        // Если заказ завершён или отменён, освобождаем курьера
+        // Освобождаем курьера при завершении или отмене
         if (status == OrderStatus.Completed || status == OrderStatus.Cancelled)
         {
             if (order.Courier != null)
@@ -102,4 +132,3 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 }
-

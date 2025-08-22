@@ -1,7 +1,11 @@
-﻿namespace FoodDeliveryApp.Models;
-
+﻿// Models/OrderCreateDto.cs
 public class OrderCreateDto
 {
-    public int RestaurantId { get; set; }           // ID ресторана
-    public List<int> ProductIds { get; set; } = new(); // Список ID продуктов
+    public List<CartItemDto> Items { get; set; } = new();
+}
+
+public class CartItemDto
+{
+    public int ProductId { get; set; }
+    public int Quantity { get; set; }
 }
