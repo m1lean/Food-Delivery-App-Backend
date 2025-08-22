@@ -5,12 +5,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- DB ---
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=fooddelivery.db")); // ✅ регистрируем контекст
+    options.UseSqlite("Data Source=fooddelivery.db"));
 
 // --- JWT настройка ---
 var jwtSettings = builder.Configuration.GetSection("Jwt");
@@ -38,6 +39,13 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<JwtService>();
 
+// --- Controllers с JSON Enum как строки ---
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+
 // --- Swagger ---
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -49,6 +57,7 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Backend для приложения доставки еды (по типу Glovo)"
     });
 
+    // 🔹 JWT авторизация
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -75,11 +84,9 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-builder.Services.AddControllers();
-
 var app = builder.Build();
 
-// --- Swagger ---
+// --- Swagger UI ---
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -95,7 +102,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// --- Seeding ---
+// --- Seeding базы данных ---
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
