@@ -9,6 +9,10 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Courier> Couriers => Set<Courier>();
+    
+    public DbSet<ReviewRestaurant> ReviewRestaurants { get; set; }
+    public DbSet<ReviewCourier> ReviewCouriers { get; set; }
+
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();

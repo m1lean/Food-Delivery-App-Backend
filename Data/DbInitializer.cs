@@ -6,17 +6,17 @@ namespace FoodDeliveryApp.Data
     {
         public static void Seed(AppDbContext context)
         {
-            // ------------------- Рестораны -------------------
+            // ------------------- Рестораны -----------------
             if (!context.Restaurants.Any())
             {
                 var restaurants = new List<Restaurant>
                 {
-                    new() { Name = "McDonald's", Latitude = 48.8566, Longitude = 2.3522 },
-                    new() { Name = "Pizza Hut", Latitude = 41.9028, Longitude = 12.4964 },
-                    new() { Name = "Burger King", Latitude = 52.5200, Longitude = 13.4050 },
-                    new() { Name = "Sushi Samba", Latitude = 51.5074, Longitude = -0.1278 },
-                    new() { Name = "Le Pain Quotidien", Latitude = 50.8503, Longitude = 4.3517 },
-                    new() { Name = "La Casa del Gelato", Latitude = 45.4642, Longitude = 9.1900 }
+                    new() { Name = "McDonald's", Description="Fast food restaurant", Latitude = 48.8566, Longitude = 2.3522 },
+                    new() { Name = "Pizza Hut", Description="Italian pizza chain", Latitude = 41.9028, Longitude = 12.4964 },
+                    new() { Name = "Burger King", Description="Fast food chain", Latitude = 52.5200, Longitude = 13.4050 },
+                    new() { Name = "Sushi Samba", Description="Japanese-Brazilian fusion", Latitude = 51.5074, Longitude = -0.1278 },
+                    new() { Name = "Le Pain Quotidien", Description="Bakery and cafe", Latitude = 50.8503, Longitude = 4.3517 },
+                    new() { Name = "La Casa del Gelato", Description="Italian gelato", Latitude = 45.4642, Longitude = 9.1900 }
                 };
 
                 context.Restaurants.AddRange(restaurants);
@@ -40,7 +40,7 @@ namespace FoodDeliveryApp.Data
                 context.SaveChanges();
             }
 
-            // ------------------- Курьеры -------------------
+            // ------------------- Курьеры -----------------
             if (!context.Couriers.Any())
             {
                 var couriers = new List<Courier>

@@ -1,4 +1,5 @@
-﻿// Models/Product.cs
+﻿using FoodDeliveryApp.Models;
+
 public enum ProductCategory
 {
     Burgers,
@@ -17,10 +18,9 @@ public class Product
     public string Name { get; set; } = null!;
     public decimal Price { get; set; }
     public ProductCategory Category { get; set; }
-    public bool IsAvailable { get; set; } = true; // для меню в реальном времени
-    public string? ImageUrl { get; set; } // ссылка на картинку продукта
-
-    public decimal? Discount { get; set; } // процент скидки, например 0.1 = 10%
+    public bool IsAvailable { get; set; } = true; 
+    public string? ImageUrl { get; set; } 
+    public decimal? Discount { get; set; } 
 
     public int RestaurantId { get; set; }
     public Restaurant Restaurant { get; set; } = null!;

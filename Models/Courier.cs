@@ -10,7 +10,9 @@ public class Courier
     public double Latitude { get; set; } = 0.0;
     public double Longitude { get; set; } = 0.0;
     // GPS // GPS // GPS // GPS // GPS // GPS
-    
+   
+    public ICollection<ReviewCourier> Reviews { get; set; } = new List<ReviewCourier>();
+
     public List<Order>? Orders { get; set; }
     public bool IsAvailable { get; set; } = true;
 }
