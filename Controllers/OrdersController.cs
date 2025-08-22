@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using FoodDeliveryApp.Data;
 using FoodDeliveryApp.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace FoodDeliveryApp.Controllers;
 
@@ -34,12 +35,19 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Order>> CreateOrder([FromBody] OrderCreateDto dto)
     {
-        // Ищем ресторан
+        // 🔹 Получаем UserId из JWT
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub");
+        if (userIdClaim == null)
+            return Unauthorized("UserId не найден в токене");
+
+        int userId = int.Parse(userIdClaim.Value);
+
+        // 🔹 Ищем ресторан
         var restaurant = await _context.Restaurants.FindAsync(dto.RestaurantId);
         if (restaurant == null)
             return BadRequest("Ресторан не найден");
 
-        // Ищем продукты
+        // 🔹 Ищем продукты
         var products = await _context.Products
             .Where(p => dto.ProductIds.Contains(p.Id))
             .ToListAsync();
@@ -47,7 +55,7 @@ public class OrdersController : ControllerBase
         if (!products.Any())
             return BadRequest("Продукты не найдены");
 
-        // Ищем свободного курьера
+        // 🔹 Ищем свободного курьера
         var courier = await _context.Couriers.FirstOrDefaultAsync(c => c.IsAvailable);
         if (courier == null)
             return BadRequest("Нет свободных курьеров");
@@ -56,7 +64,7 @@ public class OrdersController : ControllerBase
 
         var order = new Order
         {
-            UserId = dto.UserId,
+            UserId = userId, // ✅ берём из JWT
             RestaurantId = dto.RestaurantId,
             Products = products,
             CourierId = courier.Id,
@@ -94,3 +102,4 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 }
+
