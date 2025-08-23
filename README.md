@@ -4,6 +4,8 @@
 
 **A modern, scalable food delivery API that powers the next generation of food ordering experiences**
 
+![GitHub last commit](https://img.shields.io/github/last-commit/m1lean/Food-Delivery-App-Backend)
+
 [![.NET](https://img.shields.io/badge/.NET-9.0-512BD4?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
